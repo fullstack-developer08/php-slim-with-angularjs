@@ -1,0 +1,7 @@
+var express = require('express')
+var serveStatic = require('serve-static')
+var cors = require('cors')
+var app = express()
+app.use(serveStatic(__dirname))
+app.use(cors())
+app.listen(4000)

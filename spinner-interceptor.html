@@ -1,0 +1,68 @@
+<html>
+
+<head></head>
+
+<body>
+    <div ng-app="myApp" ng-controller="formCtrl">
+        <div ng-repeat="errorMessage in data.errorMessages track by $index">{{errorMessage}}</div>
+        <form name="myForm" novalidate>
+            First Name:<br>
+            <input type="text" name="firstName" ng-model="user.firstName"><br> Last Name:<br>
+            <input type="text" ng-model="user.lastName">
+            <br><br>
+            <button ng-click="reset()">RESET</button>
+            <input type="submit" ng-click="submit()">Submit</input>
+        </form>
+        <p>form = {{user}}</p>
+        <p>master = {{master}}</p>
+    </div>
+    <script src="https://code.angularjs.org/1.6.6/angular.min.js"></script>
+    <script src="https://code.angularjs.org/1.6.6/angular-route.js"></script>
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('formCtrl', function ($scope, $log, $http, errorInterceptor) {
+            $scope.data = {
+                errorMessages: []
+            };
+            $scope.master = { firstName: "John", lastName: "Doe" };
+            $scope.reset = function () {
+                $scope.user = angular.copy($scope.master);
+            };
+            $scope.reset();
+            $scope.$on('clearMessages', function () {
+                $scope.data.errorMessages=[];
+            });
+            $scope.$on('errorMessages', function (event, data) {
+                $scope.data.errorMessages.push(data.message);
+            });
+            $scope.submit = function () {
+                $http.get('example/').then(function (res) {
+                    return res.data;
+                });
+            };
+        });
+
+        app.factory('errorInterceptor', ['$rootScope', '$log', function ($rootScope, $log) {
+            return {
+                response: function (response) {
+                    $log.log('test1');
+                    var errors = (response.data && response.data.payload) ? response.data.payload.errors || [] : [];
+                    if (errors instanceof Array) {
+                        $rootScope.$broadcast('clearMessages');
+                        errors.forEach(function (data) {
+                            $rootScope.$broadcast('errorMessages', data);
+                        });
+                    }
+                    return response;
+                }
+            };
+        }]);
+
+        app.config(['$httpProvider', function ($httpProvider) {
+            $httpProvider.interceptors.push('errorInterceptor');
+        }]);
+
+    </script>
+</body>
+
+</html>
